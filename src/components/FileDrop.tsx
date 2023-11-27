@@ -1,5 +1,8 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { read } from "xlsx";
+import SpreadsheetRow from "../types/SpreadsheetRow";
+import { parseSpreadsheet } from "../util/spreadsheetParser";
 
 const baseStyle = {
   flex: 1,
@@ -31,10 +34,13 @@ const rejectStyle = {
 };
 
 function FileDrop() {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    for (const file of acceptedFiles) {
-      console.log(file.arrayBuffer());
-    }
+  const [spreadsheetRows, setSpreadsheetRows] = useState<SpreadsheetRow[]>([]);
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    const fileBuffer = await file.arrayBuffer();
+    const workbook = read(fileBuffer);
+    setSpreadsheetRows(parseSpreadsheet(workbook));
   }, []);
 
   const {
@@ -44,7 +50,16 @@ function FileDrop() {
     isDragAccept,
     isDragReject,
     isFocused,
-  } = useDropzone({ onDrop });
+  } = useDropzone({
+    accept: {
+      "application/vnd.ms-excel": [".xls"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
+    },
+    multiple: false,
+    onDrop,
+  });
 
   const style = useMemo(
     () => ({
@@ -60,7 +75,11 @@ function FileDrop() {
     <div {...getRootProps({ style })}>
       <input {...getInputProps()} />
       {isDragActive ? (
-        <p>Drop the Training Tables spreadsheet here.</p>
+        isDragAccept ? (
+          <p>Drop the Training Tables spreadsheet here.</p>
+        ) : (
+          <p>Please choose an .xls or .xlsx file.</p>
+        )
       ) : (
         <p>
           Drag and drop the Training Tables spreadsheet here, or click to select
