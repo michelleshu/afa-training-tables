@@ -1,8 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { read } from "xlsx";
-import SpreadsheetRow from "../types/SpreadsheetRow";
+import Meal from "../types/Meal";
+import Team from "../types/Team";
 import { parseSpreadsheet } from "../util/spreadsheetParser";
+import { getMealsByTeam, getTeamDetails } from "../util/teamParser";
 
 const baseStyle = {
   flex: 1,
@@ -33,15 +35,27 @@ const rejectStyle = {
   borderColor: "#f44336",
 };
 
-function FileDrop() {
-  const [spreadsheetRows, setSpreadsheetRows] = useState<SpreadsheetRow[]>([]);
-
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    const fileBuffer = await file.arrayBuffer();
-    const workbook = read(fileBuffer);
-    setSpreadsheetRows(parseSpreadsheet(workbook));
-  }, []);
+function FileDrop({
+  updateTeamDetails,
+  updateMealsByTeam,
+}: {
+  updateTeamDetails: (teamDetails: Record<string, Team>) => void;
+  updateMealsByTeam: (mealsByTeam: Record<string, Meal[]>) => void;
+}) {
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      const fileBuffer = await file.arrayBuffer();
+      const workbook = read(fileBuffer);
+      const spreadsheetRows = parseSpreadsheet(workbook);
+      const mealsByTeam = getMealsByTeam(spreadsheetRows);
+      updateTeamDetails(
+        getTeamDetails(spreadsheetRows, Object.keys(mealsByTeam))
+      );
+      updateMealsByTeam(mealsByTeam);
+    },
+    [updateTeamDetails, updateMealsByTeam]
+  );
 
   const {
     getRootProps,

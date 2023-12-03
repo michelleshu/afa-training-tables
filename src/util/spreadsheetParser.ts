@@ -38,12 +38,12 @@ const toSpreadsheetRowOrNull: (
 ) => SpreadsheetRow | null = (row) => {
   if (isValidRow(row)) {
     return {
-      day: <string>row[0],
-      date: <number>row[1],
-      time: <string>row[2],
-      headcount: <string>row[3],
-      caterer: <string>row[4],
-      menu: <string>row[5],
+      day: row[0] as string,
+      date: row[1] as number,
+      time: row[2] as string,
+      headcount: row[3] as string,
+      caterer: row[4] as string,
+      menu: row[5] as string,
     };
   }
   return null;
